@@ -46,7 +46,7 @@
             </div>
             </div>
         </div>
-        <h4>Geracao inicial</h4>
+        <h4>Ultima populacao gerada</h4>
         <table class="bordered">
             <thead>
                 <tr>
@@ -197,17 +197,30 @@
 
                 self.executaAlgoritmo = function(){
                     inicializaPopulacao();
-
-                    var probCruzamento = Math.random();
                     aptidao()
-                    if(probCruzamento < 0.9){
-                        var populacaoIntermediaria = selecao();
+                    
+                    for(var i = 0; i < self.alg.numGeracoes; i++){
 
-                        var filhos = cruzamento(populacaoIntermediaria[0].individuo, populacaoIntermediaria[1].individuo);
+                        var probCruzamento = Math.random();
 
-                        self.populacao.push(filhos[0][0])
-                        self.populacao.push(filhos[0][1])
+                        if(probCruzamento < 0.9){
+                            var populacaoIntermediaria = selecao();
+                            
+                            for(var j = 0; j < populacaoIntermediaria.length/2; j++){
+                                var filhos = cruzamento(populacaoIntermediaria[j].individuo, populacaoIntermediaria[j+1].individuo);
+
+                                self.populacao.push(filhos[0][0]);
+                                self.populacao.push(filhos[0][1]);
+                            }
+                            
+                        } 
+
+                        aptidao()
+                        
+                        console.log(self.populacao)
+                        
                     }
+                    
                 };
 
             });
