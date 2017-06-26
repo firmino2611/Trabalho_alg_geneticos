@@ -33,7 +33,7 @@
                         <label for="last_name">Numero de geracoes</label>
                     </div>
                     <div class="input-field col m4">
-                        <input ng-model="ctrl.alg.numIndividuos" id="last_name" name="numeroIndividuos" type="number" class="validate">
+                        <input ng-model="ctrl.alg.numIndividuos" min="2" id="last_name" name="numeroIndividuos" type="number" class="validate">
                         <label for="last_name">Numero de individuos</label>
                     </div>
                     <div class="input-field col m4">
@@ -46,24 +46,27 @@
             </div>
             </div>
         </div>
-        <h4>Ultima populacao gerada</h4>
-        <table class="bordered">
-            <thead>
-                <tr>
-                    <th>Individuo</th>
-                    <th>Aptidao</th>
-                    <th>Aptidao Acumulada</th>
-                </tr>
-            </thead>
+        <div ng-repeat="populacao in ctrl.populacaoAtual track by $index">
+            <h4>geracao {{ $index }}</h4>
+            <table class="bordered">
+                <thead>
+                    <tr>
+                        <th>Individuo</th>
+                        <th>Aptidao</th>
+                        <th>Aptidao Acumulada</th>
+                    </tr>
+                </thead>
 
-            <tbody>
-                <tr ng-repeat="iten in ctrl.populacao">
-                    <td>{{ iten.individuo }}</td>
-                    <td>{{ iten.aptidao.toFixed(2) }}</td>
-                    <td>{{ iten.aptidaoAcumulada.toFixed(2) }}</td>
-                </tr>
-            </tbody>
-        </table>
+                <tbody>
+                    <tr ng-repeat="iten in populacao">
+                        <td>{{ iten.individuo }}</td>
+                        <td>{{ iten.aptidao.toFixed(2) }}</td>
+                        <td>{{ iten.aptidaoAcumulada.toFixed(2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
 
         <!--Import jQuery before materialize.js-->
          <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
@@ -85,6 +88,7 @@
 
                 var inicializaPopulacao = function(){
                     self.populacao = [];
+                    var pop = [];
                     for(var i = 0;  i < self.alg.numIndividuos;  i++){
                         var individuo = new Array();
                         for( j = 0;  j <  self.alg.numCromossomos;  j++){
@@ -97,7 +101,9 @@
                             aptidaoAcumulada: 0
                         }
                         self.populacao.push(obj)
+                        pop.push(obj)
                     }
+
                 }
 
                 // calcula a apitidao de toda a geracao e retorna a populacao ordenada
@@ -112,9 +118,9 @@
 
                         self.populacao[i].aptidao = fx;
                     }
-                    var maior = {};
+                    var maior = self.populacao[0];
                     // Ordena a matriz de objetos pela aptidao
-                    for(var i = 0; i < self.populacao.length - 1; i++){
+                    for(var i = 0; i < self.populacao.length; i++){
                         for(var j = 0; j < self.populacao.length; j++){
                             if(self.populacao[i].aptidao > self.populacao[j].aptidao ){
                                 maior = self.populacao[i];
@@ -198,15 +204,20 @@
                 self.executaAlgoritmo = function(){
                     inicializaPopulacao();
                     aptidao()
+                    // console.log(self.populacao)
                     
+                    self.populacaoAtual = [];
+                    self.populacaoAtual.push(self.populacao);
                     for(var i = 0; i < self.alg.numGeracoes; i++){
 
                         var probCruzamento = Math.random();
-
+                        // console.log(probCruzamento)
+                        
                         if(probCruzamento < 0.9){
                             var populacaoIntermediaria = selecao();
+                            // console.log(populacaoIntermediaria)
                             
-                            for(var j = 0; j < populacaoIntermediaria.length/2; j++){
+                            for(var j = 0; j < populacaoIntermediaria.length; j +=2){
                                 var filhos = cruzamento(populacaoIntermediaria[j].individuo, populacaoIntermediaria[j+1].individuo);
 
                                 self.populacao.push(filhos[0][0]);
@@ -216,8 +227,9 @@
                         } 
 
                         aptidao()
+                        self.populacaoAtual.push(self.populacao);
                         
-                        console.log(self.populacao)
+                        // console.log(self.populacao)
                         
                     }
                     
