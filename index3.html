@@ -1,3 +1,202 @@
+<?php
+    // array de numeros aleatorios dados no exercicio
+    define('NUM_ALEATORIOS', [0.863, 0.193, 0.606, 0.675, 0.508, 0.426, 0.324, 0.558]);
+    define('NUM_INDIVIDUOS', 8);
+    define('NUM_CROMOSSOMOS', 18);
+    define('MIN_FUNCAO', -2.8);
+    define('MAX_FUNCAO', 2.6);
+    define('NUM_GERACOES', 10);
+
+    function binarioToDecimal($bin){
+        $total  = 0;
+        $potenc = 1;
+
+        while($bin > 0) {
+            $total += $bin % 10 * $potenc;
+            $bin    = $bin / 10;
+            $potenc = $potenc * 2;
+        }
+
+        return $total;
+    }
+    function inicializaPopulacao(){
+        $populacao = [];
+        for($i = 0; $i < NUM_INDIVIDUOS; $i++){
+            $individuo = [];
+            for($j = 0; $j < NUM_CROMOSSOMOS; $j++){
+                $individuo[] = rand(0, 1);
+            }
+            $obj = [
+                'individuo' => $individuo,
+                'aptidao' => 0,
+                'aptidaoAcumulada' => 0,
+                'valorDecimal' => 0
+            ];
+            $populacao[] = $obj;
+        }
+        return $populacao;
+    }
+
+     // calcula a aptidao acumulada dos individuos da geracao
+    function aptidaoAcumulada($populacao){
+        $populacao[0]['aptidaoAcumulada'] = $populacao[0]['aptidao'];
+        
+        for($i = 0; $i < count($populacao) - 1; $i++){
+            $populacao[$i+1]['aptidaoAcumulada'] = $populacao[$i]['aptidaoAcumulada'] + $populacao[$i+1]['aptidao'];
+        }
+
+        return $populacao;
+    }
+
+    // calcula a apitidao de toda a geracao e retorna a populacao ordenada
+    function aptidao($populacao){
+      
+        for($i = 0; $i < count($populacao); $i++){
+            // calculo para converter o valor dentro do intervalo
+            $valorInterno = MIN_FUNCAO + ( MAX_FUNCAO - MIN_FUNCAO ) * ( binarioToDecimal( implode('', $populacao[$i]['individuo']) ) / ( pow(2, NUM_CROMOSSOMOS ) - 1 ) );
+
+            // calculo da funcao matematica f(x)
+            $fx = (-1 * pow($valorInterno, 6)) + (7 * (pow($valorInterno, 4))) - ( 4 * pow($valorInterno, 3)) + (20 * $valorInterno) + 30;
+
+            $populacao[$i]['valorInterno'] = $valorInterno;
+            $populacao[$i]['aptidao'] = number_format($fx, 2);
+        }
+        
+        $maior = $populacao[0];
+
+        // faz a ordenacao da populacao 
+        for($i = 0; $i < count($populacao); $i++){
+            for($j = 0; $j < count($populacao); $j++){
+                if($populacao[$i]['aptidao'] > $populacao[$j]['aptidao'] ){
+                    $maior = $populacao[$i];
+                    $populacao[$i] = $populacao[$j];
+                    $populacao[$j] = $maior;
+                }
+            }
+        }
+
+        return aptidaoAcumulada($populacao);
+    }
+
+    function selecao($populacao){
+        $objSelecionado;
+        $populacaoIntermediaria = [];
+        
+        // selecao dos pais para populacao intermediaria
+        // gera um valor aleatorio para pegar um objeto
+        $random = rand($populacao[0]['aptidaoAcumulada'], $populacao[NUM_INDIVIDUOS - 1]['aptidaoAcumulada']);
+        $t = $random;
+         // selecionada o objeto de acordo com o valor da aptidao acumulada e o valor gerado anteriormente
+        for($i = 2; $i < count($populacao); $i++){
+            if($populacao[$i]['aptidaoAcumulada'] >= $random){
+                $objSelecionado = $populacao[$i];
+                break;
+            }
+        }
+
+        for($k = 0; $k < NUM_INDIVIDUOS; $k++){
+            $aux = $objSelecionado['aptidaoAcumulada'] * rand(0, 100)/100;
+            // adiciona os elementos para o populacao intermediaria e exclui eles da populacao original, deixando apensa os dois melhores na populacao original
+            for($j = 0; $j < count($populacao); $j++){
+                if($populacao[$j]['aptidaoAcumulada'] >= $aux){
+                    $populacaoIntermediaria[] = $populacao[$j];
+                    break;
+                }
+            } 
+        }
+
+        return [
+                'populacao' => array_slice($populacao, 0, 2), // pega so os dois primeiros individuos da populacao
+                'populacaoIntermediaria' => $populacaoIntermediaria,
+                'random' => $t
+        ];
+      
+    }
+    // mandar apensa o individuo $populacao[x]['individuo']
+    function cruzamento($pai1, $pai2){
+        // escolhe um ponto aleatoriamente no intervalo [0, NUM_CROMOSSOMOS - 1]
+        $ponto = rand(0, (NUM_CROMOSSOMOS - 1));
+
+        $filhos[] = array_merge(array_slice($pai1, 0, $ponto), array_slice($pai2, $ponto, NUM_CROMOSSOMOS));
+        $filhos[] = array_merge(array_slice($pai2, 0, $ponto), array_slice($pai1, $ponto, NUM_CROMOSSOMOS));
+
+        // [0,1,1,0] retorna apenas os arrays que devera ser inserido na populacao
+        return $filhos;
+    }
+
+    function mutacao($populacao){
+        $numIndividuos = rand(2, 3);// sorteia o numero de individuos que sofreram mutacao
+        
+        for($j = 0; $j <= $numIndividuos; $j++){
+            $rand[] = rand(0, $numIndividuos); // pega um valor aleatorio para selecionar um indivudo da populacao
+            $objSelecionados[] = $populacao[$rand[$j]]; // seleciona o individuo na posicao aleatoria gerada anteriormente
+        }
+
+        for($i = 0; $i <= $numIndividuos; $i++){
+            $numCromossomos = rand(1, 3); // seleciona um valor aleatorio de cromossomos para ser alterados no individuo
+
+            for($k = 0; $k < $numCromossomos; $k++){
+                $r = rand(0, NUM_CROMOSSOMOS - 1);
+ 
+                if($objSelecionados[$i]['individuo'][$r] == 1)
+                    $objSelecionados[$i]['individuo'][$r] = 0;
+                else
+                    $objSelecionados[$i]['individuo'][$r] = 1;
+            }
+            
+        }
+
+        for($x = 0; $x < count($rand); $x++){
+            $populacao[$rand[$x]] = $objSelecionados[$rand[$x]];
+        }
+
+        return $populacao;
+    }
+    
+
+    // inicializa  a populacao
+    $populacao = inicializaPopulacao();
+    // calcula a aptidao e aptidao acumulada de todos individuos da populacao e ordena pela aptidao
+    $populacao = aptidao($populacao);
+
+    $populacaoAtual[] = $populacao;
+
+    for($i = 0; $i < NUM_GERACOES; $i++){
+
+        $selecao = selecao($populacao);
+        $populacaoIntermediaria = $selecao['populacaoIntermediaria'];
+        $populacao = $selecao['populacao'];
+        $random[] = $selecao['random'];
+
+        for($j = 0; $j < count($populacaoIntermediaria); $j += 2){
+            $probCruzamento = rand(0, 100) / 100;
+            
+            if($probCruzamento < 0.9){
+            
+                $filhos = cruzamento($populacaoIntermediaria[$j]['individuo'], $populacaoIntermediaria[$j+1]['individuo']);
+
+                $populacao[] = [
+                        'individuo' => $filhos[0],
+                        'aptidao' => 0,
+                        'aptidaoAcumulada' => 0
+                ];
+                $populacao[] =  [
+                        'individuo' => $filhos[1],
+                        'aptidao' => 0,
+                        'aptidaoAcumulada' => 0
+                ];
+            }else{
+                $populacao[] = $populacaoIntermediaria[$j];
+                $populacao[] = $populacaoIntermediaria[$j+1];
+            }
+        }
+
+        $populacao = mutacao($populacao);
+        $populacao = aptidao($populacao);
+        $populacaoAtual[] = $populacao;
+    }
+
+?>
 <!DOCTYPE html>
   <html ng-app="app">
     <head>
@@ -12,60 +211,74 @@
     </head>
 
     <body ng-controller="appController as ctrl" class="container">
-
-        <div class="row">
+        <a href="" class="btn" onclick="window.print()">imprimir</a>
+        <!--<div class="row">
             <div class="col l8 offset-l2" style="padding: 100px 0px">
-                <div class="row">
-                    <h4>Intervalo da funcao</h4>
-                    <div class="input-field col m6">
-                        <input ng-model="ctrl.funcao.minFuncao" id="last_name" name="min" type="number" class="validate">
-                        <label for="last_name">Mínimo</label>
-                    </div>
-                    <div class="input-field col m6">
-                        <input ng-model="ctrl.funcao.maxFuncao" id="last_name" name="max" type="number" class="validate">
-                        <label for="last_name">Máximo</label>
-                    </div>
-                </div>
-                <div class="row">
-                    <h4>Informacoes adicionais</h4>
-                    <div class="input-field col m4">
-                        <input ng-model="ctrl.alg.numGeracoes" id="last_name" name="numeroGeracoes" type="number" class="validate">
-                        <label for="last_name">Numero de geracoes</label>
-                    </div>
-                    <div class="input-field col m4">
-                        <input ng-model="ctrl.alg.numIndividuos" min="2" id="last_name" name="numeroIndividuos" type="number" class="validate">
-                        <label for="last_name">Numero de individuos</label>
-                    </div>
-                    <div class="input-field col m4">
-                        <input ng-model="ctrl.alg.numCromossomos" id="last_name" name="numeroCromossomos" type="number" class="validate">
-                        <label for="last_name">Numero de cromosomos</label>
-                    </div>
-                </div>
+				<form action="executa/algoritmo" method="get">
+					<div class="row">
+						<h4>Intervalo da funcao</h4>
+						<div class="input-field col m6">
+							<input ng-model="ctrl.funcao.minFuncao" id="last_name" name="min" type="number" class="validate">
+							<label for="last_name">Mínimo</label>
+						</div>
+						<div class="input-field col m6">
+							<input ng-model="ctrl.funcao.maxFuncao" id="last_name" name="max" type="number" class="validate">
+							<label for="last_name">Máximo</label>
+						</div>
+					</div>
+					<div class="row">
+						<h4>Informacoes adicionais</h4>
+						<div class="input-field col m4">
+							<input ng-model="ctrl.alg.numGeracoes" id="last_name" name="numeroGeracoes" type="number" class="validate">
+							<label for="last_name">Numero de geracoes</label>
+						</div>
+						<div class="input-field col m4">
+							<input ng-model="ctrl.alg.numIndividuos" min="2" id="last_name" name="numeroIndividuos" type="number" class="validate">
+							<label for="last_name">Numero de individuos</label>
+						</div>
+						<div class="input-field col m4">
+							<input ng-model="ctrl.alg.numCromossomos" id="last_name" name="numeroCromossomos" type="number" class="validate">
+							<label for="last_name">Numero de cromosomos</label>
+						</div>
+					</div>
 
-                <button ng-click="ctrl.executaAlgoritmo()" class="btn" type="">gerar</button>
+					<button ng-click="ctrl.executaAlgoritmo()" class="btn" type="">gerar</button>
+				</form>
             </div>
             </div>
-        </div>
-        <div ng-repeat="populacao in ctrl.populacaoAtual track by $index">
-            <h4>geracao {{ $index }}</h4>
-            <table class="bordered">
-                <thead>
-                    <tr>
-                        <th>Individuo</th>
-                        <th>Aptidao</th>
-                        <th>Aptidao Acumulada</th>
-                    </tr>
-                </thead>
+        </div>-->
+           <?php $i = 0; ?>
+        
+            <?php foreach($populacaoAtual as $populacao): ?>
+                
+            <div class="row">
+                <h4>Geracao <?php echo $i; ?></h4>
+                <h5>Valor sorteado para selecao: <?php echo $random[$i]; ?></h5>
+                <table class="bordered">
+                    <thead>
+                        <tr>
+                            <th>Individuo</th>
+                            <th>x</th>
+                            <th>f(x)</th>
+                            <th>Aptidao Acumulada</th>
+                        </tr>
+                    </thead>
 
-                <tbody>
-                    <tr ng-repeat="iten in populacao">
-                        <td>{{ iten.individuo }}</td>
-                        <td>{{ iten.aptidao.toFixed(2) }}</td>
-                        <td>{{ iten.aptidaoAcumulada.toFixed(2) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                    <tbody>
+                        <?php foreach($populacao as $individuo): ?>
+                            <tr >
+                                <td><?php echo implode(',', $individuo['individuo']);  ?></td>
+                                <td><?php echo $individuo['valorInterno'];  ?></td>
+                                <td><?php echo $individuo['aptidao'];  ?></td>
+                                <td><?php echo $individuo['aptidaoAcumulada'];  ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        
+                    </tbody>
+                </table>
+            </div>
+            <?php $i++; ?>
+            <?php endforeach; ?>
         
 
         <!--Import jQuery before materialize.js-->
@@ -73,169 +286,11 @@
           <!-- Compiled and minified JavaScript -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
-
         <script>
-            angular.module('app', []);
-            angular.module('app').controller('appController', function(){
-                var self = this;
-                self.populacao = [];
-                // self.populacao.individuo = {};
-                // self.populacao.aptidao = 0;
-                
-                var binarioToDecimal = function(valor){
-                    return parseInt(valor.replace(/,/g, ""), 2);
-                }
-
-                var inicializaPopulacao = function(){
-                    self.populacao = [];
-                    var pop = [];
-                    for(var i = 0;  i < self.alg.numIndividuos;  i++){
-                        var individuo = new Array();
-                        for( j = 0;  j <  self.alg.numCromossomos;  j++){
-                            num = Math.floor(Math.random() * 10) % 2; // escolhe um número no intervalo [0,1]
-                            individuo.push(num); // insere no vetor do individuo
-                        }
-                        var obj = {
-                            individuo: individuo,
-                            aptidao: 0,
-                            aptidaoAcumulada: 0
-                        }
-                        self.populacao.push(obj)
-                        pop.push(obj)
-                    }
-
-                }
-
-                // calcula a apitidao de toda a geracao e retorna a populacao ordenada
-                var aptidao = function(){
-                    var apitidoes = [];
-                    for(var i = 0;  i < self.alg.numIndividuos;  i++){
-                        // calculo para converter o valor dentre do intervalo
-                        var valorInterno = self.funcao.minFuncao + ( self.funcao.maxFuncao - self.funcao.minFuncao ) * ( binarioToDecimal( self.populacao[i].individuo.toString() ) / ( Math.pow(2, self.alg.numCromossomos ) - 1 ) )
-
-                        // calculo da funcao matematica f(x)
-                        var fx = Math.pow((-1 * valorInterno), 6) + (7 * (Math.pow(valorInterno, 4))) - ( 4 * Math.pow(valorInterno, 3)) + (20 * valorInterno) + 30;
-
-                        self.populacao[i].aptidao = fx;
-                    }
-                    var maior = self.populacao[0];
-                    // Ordena a matriz de objetos pela aptidao
-                    for(var i = 0; i < self.populacao.length; i++){
-                        for(var j = 0; j < self.populacao.length; j++){
-                            if(self.populacao[i].aptidao > self.populacao[j].aptidao ){
-                                maior = self.populacao[i];
-                                self.populacao[i] = self.populacao[j];
-                                self.populacao[j] = maior;
-                            }
-                        }
-                    }
-
-                    aptidaoAcumulada();
-                   
-                };
-
-                // calcula a aptidao acumulada dos individuos da geracao
-                var aptidaoAcumulada = function(){
-                    self.populacao[0].aptidaoAcumulada = self.populacao[0].aptidao;
-                    
-                    for(var i = 0; i < self.populacao.length - 1; i++){
-                        self.populacao[i+1].aptidaoAcumulada = self.populacao[i].aptidaoAcumulada + self.populacao[i+1].aptidao;
-                    };
-
-                };
-
-                var selecao = function(){
-                    var objSelecionado;
-                    var populacaoIntermediaria = [];
-                    // array de numeros aleatorios dados no exercicio
-                    var numerosAleatorios = [0.863, 0.193, 0.606, 0.675, 0.508, 0.426, 0.324, 0.558];
-
-                    // selecao dos pais para populacao intermediaria
-                    // gera um valor aleatorio para pegar um objeto
-                    do{
-                        var random = Math.floor((Math.random() * self.populacao[self.populacao.length - 1].aptidaoAcumulada) + self.populacao[0].aptidaoAcumulada);
-                    }while(random > self.populacao[self.populacao.length - 1].aptidaoAcumulada)
-
-                    // selecionada o objeto de acordo com o valor da aptidao acumulada e o valor gerado anteriormente
-                    for(var i = 2; i < self.populacao.length; i++){
-                        if(self.populacao[i].aptidaoAcumulada >= random){
-                            objSelecionado = self.populacao[i];
-                            break;
-                        }
-                    }
-                    
-                    for(var k = 0; k < numerosAleatorios.length; k++){
-                        var aux = objSelecionado.aptidaoAcumulada * numerosAleatorios[k];
-                        // adiciona os elementos para o populacao intermediaria e exclui eles da populacao original, deixando apensa os dois melhores na populacao original
-                        for(var j = 2; j < self.populacao.length; j++){
-                            if(self.populacao[j].aptidaoAcumulada >= aux){
-                                populacaoIntermediaria.push(self.populacao[j]);
-                                self.populacao.splice(j, 1);
-                                break;
-                            }
-                        } 
-                    }
-                    return populacaoIntermediaria;
-                };
-
-                // enviar somentes os individuos e nao o objeto completo
-                var cruzamento = function(pai1, pai2){
-                    var filhos = [];
-                    var ponto = Math.floor((Math.random() * self.alg.numCromossomos) + 0);
-                    // [
-                    //     { individuo: [0,0,1,0], aptidao: 23}
-                    // ]
-                   
-                    filhos.push({
-                        individuo: pai1.slice(0, ponto).concat(pai2.slice(ponto, pai2.length)),
-                        aptidao: 0,
-                        aptidaoAcumulada: 0
-                    });
-
-                    filhos.push({
-                        individuo: pai2.slice(0, ponto).concat(pai1.slice(ponto, pai1.length)),
-                        aptidao: 0,
-                        aptidaoAcumulada: 0
-                    });
-
-                    return [filhos, ponto];
-                };
-
-                self.executaAlgoritmo = function(){
-                    inicializaPopulacao();
-                    aptidao()
-                    // console.log(self.populacao)
-                    
-                    self.populacaoAtual = [];
-                    self.populacaoAtual.push(self.populacao);
-                    for(var i = 0; i < self.alg.numGeracoes; i++){
-
-                        var probCruzamento = Math.random();
-                        // console.log(probCruzamento)
-                        
-                        if(probCruzamento < 0.9){
-                            var populacaoIntermediaria = selecao();
-                            // console.log(populacaoIntermediaria)
-                            
-                            for(var j = 0; j < populacaoIntermediaria.length; j +=2){
-                                var filhos = cruzamento(populacaoIntermediaria[j].individuo, populacaoIntermediaria[j+1].individuo);
-
-                                self.populacao.push(filhos[0][0]);
-                                self.populacao.push(filhos[0][1]);
-                            }
-                            
-                        } 
-
-                        aptidao()
-                        self.populacaoAtual.push(self.populacao);
-                        
-                        // console.log(self.populacao)
-                        
-                    }
-                    
-                };
-
-            });
+            function open(){
+                windon.print()
+            }
         </script>
+        
     </body>
   </html>
