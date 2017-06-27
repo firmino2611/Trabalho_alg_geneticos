@@ -1,11 +1,11 @@
 <?php
     // array de numeros aleatorios dados no exercicio
     define('NUM_ALEATORIOS', [0.863, 0.193, 0.606, 0.675, 0.508, 0.426, 0.324, 0.558]);
-    define('NUM_INDIVIDUOS', 8);
+    define('NUM_INDIVIDUOS', 10);
     define('NUM_CROMOSSOMOS', 18);
     define('MIN_FUNCAO', -2.8);
     define('MAX_FUNCAO', 2.6);
-    define('NUM_GERACOES', 10);
+    define('NUM_GERACOES', 8);
 
     function binarioToDecimal($bin){
         $total  = 0;
@@ -53,7 +53,7 @@
       
         for($i = 0; $i < count($populacao); $i++){
             // calculo para converter o valor dentro do intervalo
-            $valorInterno = MIN_FUNCAO + ( MAX_FUNCAO - MIN_FUNCAO ) * ( binarioToDecimal( implode('', $populacao[$i]['individuo']) ) / ( pow(2, NUM_CROMOSSOMOS ) - 1 ) );
+            $valorInterno = number_format(MIN_FUNCAO + ( MAX_FUNCAO - MIN_FUNCAO ) * ( binarioToDecimal( implode('', $populacao[$i]['individuo']) ) / ( pow(2, NUM_CROMOSSOMOS ) - 1 ) ), 3);
 
             // calculo da funcao matematica f(x)
             $fx = (-1 * pow($valorInterno, 6)) + (7 * (pow($valorInterno, 4))) - ( 4 * pow($valorInterno, 3)) + (20 * $valorInterno) + 30;
@@ -85,19 +85,21 @@
         // selecao dos pais para populacao intermediaria
         // gera um valor aleatorio para pegar um objeto
         $random = rand($populacao[0]['aptidaoAcumulada'], $populacao[NUM_INDIVIDUOS - 1]['aptidaoAcumulada']);
-        $t = $random;
+        
          // selecionada o objeto de acordo com o valor da aptidao acumulada e o valor gerado anteriormente
-        for($i = 2; $i < count($populacao); $i++){
+        for($i = 0; $i < count($populacao); $i++){
             if($populacao[$i]['aptidaoAcumulada'] >= $random){
                 $objSelecionado = $populacao[$i];
                 break;
             }
         }
 
-        for($k = 0; $k < NUM_INDIVIDUOS; $k++){
-            $aux = $objSelecionado['aptidaoAcumulada'] * rand(0, 100)/100;
+        for($k = 0; $k < NUM_INDIVIDUOS - 2; $k++){
+            $rand = rand(0, 100)/100;
+            $aux = $objSelecionado['aptidaoAcumulada'] * $rand; // valor que sera compardo na tabela de apptidao acumulada para selecionar o objeto
+            $t[] = $rand;
             // adiciona os elementos para o populacao intermediaria e exclui eles da populacao original, deixando apensa os dois melhores na populacao original
-            for($j = 0; $j < count($populacao); $j++){
+            for($j = 2; $j < NUM_INDIVIDUOS; $j++){
                 if($populacao[$j]['aptidaoAcumulada'] >= $aux){
                     $populacaoIntermediaria[] = $populacao[$j];
                     break;
@@ -252,13 +254,19 @@
             <?php foreach($populacaoAtual as $populacao): ?>
                 
             <div class="row">
-                <h4>Geracao <?php echo $i; ?></h4>
-                <h5>Valor sorteado para selecao: <?php echo $random[$i]; ?></h5>
+                <h4>Geracao <?php echo $i == 0 ? 'inicial' : $i; ?></h4>
+                <h5>Valores aleatorios usados para selecao: 
+                    <?php if($i != NUM_INDIVIDUOS): ?>
+                        <?php foreach($random[$i] as $r): ?>
+                            <?php echo $r . ' | '; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </h5>
                 <table class="bordered">
                     <thead>
                         <tr>
                             <th>Individuo</th>
-                            <th>x</th>
+                            <th>Valor de x</th>
                             <th>f(x)</th>
                             <th>Aptidao Acumulada</th>
                         </tr>
