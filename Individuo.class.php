@@ -17,17 +17,21 @@ class Individuo {
     *   @atributos $coordenadas array
     *   @atributos $aptidao double
     */
-    public function __construct($coordenadas, $aptidao){
+    public function __construct($coordenadas, $mapa){
         $this->coordenadas = $coordenadas;
-        $this->aptidao = $aptidao;
+        $this->aptidao = $this->aptidao($mapa);
     }
 
     /*
     *   Calcula a aptidao do individuo
     *   @retorno $aptidao double
     */ 
-    public function aptidao(){
-        return void;
+    public function aptidao($mapa){
+
+        foreach($mapa as $bairro){
+            $this->aptidao += $bairro->frequencia * ( sqrt( (pow($bairro->coordenadas[0] - $this->coordenadas[0], 2) ) + ( pow($bairro->coordenadas[1] - $this->coordenadas[1], 2) ) ) );
+        }
+        return round($this->aptidao, 2);
     }
     /*
     *   Realiza o cruzamento do individuo com outro, recebe o segundo individuo como parametro
