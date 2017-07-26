@@ -9,7 +9,7 @@ class Algoritmo{
     public $probMutacao = 0.10;
     public $populacao = [];
     public $mapa = [];
-    public $numGeracoes = 1;
+    public $numGeracoes = 5;
     public $numIndividuos = 50;
 
     public function gerarMapa(){
@@ -124,12 +124,12 @@ class Algoritmo{
         $beta = rand(0, 150)/100;
         $beta = (rand(0, 1) == 0) ? $beta* -1 : $beta;
          
-        $x = $pai1->coordenadas[0] - $beta * ($pai2->coordenadas[0] - $pai1->coordenadas[0]);
+        $x = round($pai1->coordenadas[0] - $beta * ($pai2->coordenadas[0] - $pai1->coordenadas[0]), 2);
 
         $beta = rand(0, 150)/100;
         $beta = (rand(0, 1) == 0) ? $beta* -1 : $beta;
 
-        $y = $pai1->coordenadas[1] - $beta * ($pai2->coordenadas[1] - $pai1->coordenadas[1]);
+        $y = round($pai1->coordenadas[1] - $beta * ($pai2->coordenadas[1] - $pai1->coordenadas[1]), 2);
 
         return new Individuo([$x, $y], $this->mapa);
     }
