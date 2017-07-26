@@ -5,10 +5,12 @@ include('Individuo.class.php');
 
 class Algoritmo{
 
+    public $probCruzamento = 0.90;
+    public $probMutacao = 0.10;
     public $populacao = [];
     public $mapa = [];
     public $numGeracoes = 10;
-    public $numIndividuos = 2;
+    public $numIndividuos = 4;
 
     public function gerarMapa(){
 
@@ -79,29 +81,65 @@ class Algoritmo{
         // repetir processo para todas as coordenadas...
         return $this->mapa;
     }
-
+    
     public function gerarPopulacao(){
 
         while($this->numIndividuos != count($this->populacao)){
-            $x = rand(0, 7) + rand(0, 99)/100;
-            $y = rand(0, 6) + rand(0, 99)/100;
+            $x = rand(0, 800) / 100;
+            $y = rand(0, 700) / 100; 
 
             $this->populacao[] = new Individuo([$x, $y], $this->mapa);
         }
-
         return $this->populacao;
     }
 
-    public function selecacao(){
+    public function selecao(){
+        $selecionados = [];
 
+        for($i = 0; $i < 3; $i++){
+            $rand = rand(0, $this->numIndividuos-1);
+            $this->populacao[$rand]->index = $rand;
+            $selecionados[] = $this->populacao[$rand];
+        }
+        
+        return $this->melhorIndividuo($selecionados);
     }
 
-    public function melhorIndividuo(){
+    public function melhorIndividuo($individuos){
+        $melhor = $individuos[0];
+        for($i = 0; $i < count($individuos); $i++){
+            if($individuos[$i]->aptidao < $melhor->aptidao){
+                $melhor = $individuos[$i];
+            }
+        }
+        return $melhor;
+    }
 
+        /*
+    *   Realiza o cruzamento do individuo com outro, recebe o segundo individuo como parametro
+    *   @atributo $pai2 Individuo
+    */ 
+    public function cruzamento($pai1, $pai2){
+        
     }
 }
 
 $alg = new Algoritmo();
 $alg->gerarMapa();
+$alg->gerarPopulacao();
+// var_dump($alg->gerarPopulacao());
+// echo "<br><br>";
+// var_dump($alg->selecao());
 
-var_dump($alg->gerarPopulacao());
+for($i = 0; $i < $alg->numGeracoes; $i++){
+
+    if(rand(0, 10)/10 < $alg->probCruzamento){
+        $pai1 = $alg->selecao();
+        $pai2 = $alg->selecao();
+
+        $filho = $alg->cruzamento($pai1, $pai2);
+    }
+    
+}
+
+

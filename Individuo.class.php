@@ -11,6 +11,8 @@ class Individuo {
     public $coordenadas = [0,0];
     // Aptidao do individuo
     public $aptidao = 0;
+    // posicao do individuo dentro da populacao
+    // public $index;
 
     /*
     *   Metodo constructor, para inicialiar um individuo
@@ -33,13 +35,8 @@ class Individuo {
         }
         return round($this->aptidao, 2);
     }
-    /*
-    *   Realiza o cruzamento do individuo com outro, recebe o segundo individuo como parametro
-    *   @atributo $pai2 Individuo
-    */ 
-    public function cruzamento($pai2){
+    
 
-    }
     /*
     *   Calcula a aptidao do individuo
     */ 
