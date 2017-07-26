@@ -9,8 +9,8 @@ class Algoritmo{
     public $probMutacao = 0.10;
     public $populacao = [];
     public $mapa = [];
-    public $numGeracoes = 10;
-    public $numIndividuos = 4;
+    public $numGeracoes = 1;
+    public $numIndividuos = 50;
 
     public function gerarMapa(){
 
@@ -120,26 +120,51 @@ class Algoritmo{
     *   @atributo $pai2 Individuo
     */ 
     public function cruzamento($pai1, $pai2){
-        
+        $alfa = 0.5;
+        $beta = rand(0, 150)/100;
+        $beta = (rand(0, 1) == 0) ? $beta* -1 : $beta;
+         
+        $x = $pai1->coordenadas[0] - $beta * ($pai2->coordenadas[0] - $pai1->coordenadas[0]);
+
+        $beta = rand(0, 150)/100;
+        $beta = (rand(0, 1) == 0) ? $beta* -1 : $beta;
+
+        $y = $pai1->coordenadas[1] - $beta * ($pai2->coordenadas[1] - $pai1->coordenadas[1]);
+
+        return new Individuo([$x, $y], $this->mapa);
     }
 }
 
 $alg = new Algoritmo();
 $alg->gerarMapa();
 $alg->gerarPopulacao();
+
 // var_dump($alg->gerarPopulacao());
 // echo "<br><br>";
 // var_dump($alg->selecao());
 
 for($i = 0; $i < $alg->numGeracoes; $i++){
+    $populacaoIntermediaria = [];
 
-    if(rand(0, 10)/10 < $alg->probCruzamento){
+    for($j = 0; $j < $alg->numIndividuos; $j++){
         $pai1 = $alg->selecao();
         $pai2 = $alg->selecao();
 
         $filho = $alg->cruzamento($pai1, $pai2);
+        $populacaoIntermediaria[] = $filho;
     }
-    
+
+    echo "<br><br>";
+    var_dump($alg->populacao);
+
+    $alg->populacao = $populacaoIntermediaria;
+
+    echo "<br><br>";
+    var_dump($alg->populacao);
 }
+
+echo "<br><br>";
+var_dump($alg->melhorIndividuo($alg->populacao));
+
 
 
