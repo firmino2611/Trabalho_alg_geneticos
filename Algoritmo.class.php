@@ -150,8 +150,11 @@ for($i = 0; $i < $alg->numGeracoes; $i++){
         $pai1 = $alg->selecao();
         $pai2 = $alg->selecao();
 
-        $filho = $alg->cruzamento($pai1, $pai2);
-        $populacaoIntermediaria[] = $filho;
+        $rand = rand(0, 100)/100;
+        if($rand < $alg->probCruzamento){
+            $filho = $alg->cruzamento($pai1, $pai2);
+        }    
+        $populacaoIntermediaria[] = $pai1;
     }
 
     echo "<br><br>";
