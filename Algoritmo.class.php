@@ -126,9 +126,9 @@ class Algoritmo{
                 }
             }     
         }
-        
+        $i = 0;
        while($i < $quantidade){
-           $selecionados[] = $i;
+           $selecionados[] = $individuo[$i];
            $i++
        }
         
