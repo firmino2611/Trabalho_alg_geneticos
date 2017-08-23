@@ -114,6 +114,26 @@ class Algoritmo{
         }
         return $melhor;
     }
+    
+    public function elitismo($individuos, $quantidade){
+        $maior = 0;
+        for($i = 0; $i < count($individuos); $i++){
+            for($j = 1; $j < count($individuos) - 1; $j++)){
+                if($individuos[$i]->aptidao > $individuos[$j]->aptidao){
+                    $aux = $individuos[$i];
+                    $individuos[$i] = $individuos[$j];
+                    $individuos[$j] = $aux;
+                }
+            }     
+        }
+        
+       while($i < $quantidade){
+           $selecionados[] = $i;
+           $i++
+       }
+        
+        return $selecionados;
+    }
 
         /*
     *   Realiza o cruzamento do individuo com outro, recebe o segundo individuo como parametro
@@ -145,8 +165,10 @@ $alg->gerarPopulacao();
 
 for($i = 0; $i < $alg->numGeracoes; $i++){
     $populacaoIntermediaria = [];
-
-    for($j = 0; $j < $alg->numIndividuos; $j++){
+    // Seleciona os dois melhores da população e coloca na proxima geração
+    $populacaoIntermediaria = $alg->elitismo($alg->populacao, 2);
+    
+    for($j = 0; $j < $alg->numIndividuos - 2; $j++){
         $pai1 = $alg->selecao();
         $pai2 = $alg->selecao();
 
